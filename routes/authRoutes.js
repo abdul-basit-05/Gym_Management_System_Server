@@ -19,4 +19,3 @@ router.put('/users/:id', protect, authorize('admin'), updateUser);
 router.delete('/users/:id', protect, authorize('admin'), deleteUser);
 
 export default router;
-

@@ -4,6 +4,28 @@ import Payment from '../models/Payment.js';
 import Plan from '../models/Plan.js';
 import Trainer from '../models/Trainer.js';
 
+export const updatePaymentStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status = 'Paid' } = req.body;
+
+    const payment = await Payment.findById(id);
+    if (!payment) {
+      return res.status(404).json({ success: false, message: 'Payment not found' });
+    }
+
+    payment.paymentStatus = status;
+    if (status === 'Paid') {
+      payment.finalAmount = payment.amount;
+    }
+    await payment.save();
+
+    res.status(200).json({ success: true, data: payment });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
 // Member reports
 export const getMemberReport = async (req, res) => {
   try {
@@ -16,9 +38,14 @@ export const getMemberReport = async (req, res) => {
     }
     
     if (startDate && endDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      
       query.joinDate = {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
+        $gte: start,
+        $lte: end
       };
     }
     
@@ -74,10 +101,15 @@ export const getAttendanceReport = async (req, res) => {
       });
     }
     
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    
     let query = {
       date: {
-        $gte: new Date(startDate).setHours(0, 0, 0, 0),
-        $lte: new Date(endDate).setHours(23, 59, 59, 999)
+        $gte: start,
+        $lte: end
       }
     };
     
@@ -91,14 +123,20 @@ export const getAttendanceReport = async (req, res) => {
       .sort({ date: -1, checkInTime: -1 });
     
     // Calculate statistics
+    const uniqueMembers = attendance.length > 0 
+      ? [...new Set(attendance.map(a => a.member?._id?.toString()).filter(Boolean))].length 
+      : 0;
+    
+    const daysDiff = Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24)) || 1;
+    
     const statistics = {
       totalAttendance: attendance.length,
       byType: {
         manual: attendance.filter(a => a.attendanceType === 'Manual').length,
         biometric: attendance.filter(a => a.attendanceType === 'Biometric').length
       },
-      uniqueMembers: [...new Set(attendance.map(a => a.member._id.toString()))].length,
-      averagePerDay: (attendance.length / Math.ceil((new Date(endDate) - new Date(startDate)) / (1000 * 60 * 60 * 24))).toFixed(2)
+      uniqueMembers,
+      averagePerDay: (attendance.length / daysDiff).toFixed(2)
     };
     
     // Daily breakdown
@@ -136,10 +174,15 @@ export const getFinancialReport = async (req, res) => {
       });
     }
     
+    const start = new Date(startDate);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(endDate);
+    end.setHours(23, 59, 59, 999);
+    
     let query = {
       paymentDate: {
-        $gte: new Date(startDate),
-        $lte: new Date(endDate)
+        $gte: start,
+        $lte: end
       }
     };
     

@@ -26,8 +26,17 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// for later on use
+const corsOptions = {
+  // origin: ['https://example.com', 'https://myapp.com'],
+  origin:"*",
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // allowed HTTP methods
+  // credentials: true // allow cookies/auth headers
+};
+
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -36,8 +45,8 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Database connection
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/gym_management')
-  .then(() => console.log('✅ MongoDB connected successfully'))
-  .catch((err) => console.error('❌ MongoDB connection error:', err));
+  .then(() => console.log('MongoDB connected successfully'))
+  .catch((err) => console.error('MongoDB connection error:', err));
 
 app.get("/" , (req , res) => {
   res.sendFile(path.join(__dirname, "public", "index.html"));
