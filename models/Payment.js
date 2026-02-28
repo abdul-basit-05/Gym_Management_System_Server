@@ -1,5 +1,5 @@
 import mongoose from 'mongoose';
-
+// schema
 const paymentSchema = new mongoose.Schema({
   member: {
     type: mongoose.Schema.Types.ObjectId,
