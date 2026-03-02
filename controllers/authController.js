@@ -60,18 +60,17 @@ export const register = async (req, res) => {
 // Login user
 export const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
-    console.log(req.body);
+    const { username : email, password } = req.body;
 
     // Validate input
-    if (!username || !password) {
+    if (!email || !password) {
       return res.status(400).json({
         success: false,
-        message: 'Please provide username and password'
+        message: 'Please provide email and password'
       });
     }
     // Find user
-    const user = await User.findOne({ username }).select('+password');
+    const user = await User.findOne({ email }).select('+password');
     if (!user || !user.isActive) {
       return res.status(401).json({
         success: false,
@@ -93,6 +92,18 @@ export const login = async (req, res) => {
     await user.save();
 
     const token = generateToken(user._id);
+    console.log('Generated token:',
+      {
+        user: {
+          id: user._id,
+          username: user.username,
+          email: user.email,
+          fullName: user.fullName,
+          role: user.role
+        }
+      ,
+        token
+      });
 
     res.status(200).json({
       success: true,
