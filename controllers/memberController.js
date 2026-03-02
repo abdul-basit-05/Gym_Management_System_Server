@@ -545,3 +545,24 @@ export const updatePaymentStatus = async (req, res) => {
     });
   }
 };
+
+// Get all payments
+export const getAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.find()
+      .sort({ paymentDate: -1 })
+      .populate('member', 'memberId fullName')
+      .populate('plan', 'planName');
+
+    res.status(200).json({
+      success: true,
+      count: payments.length,
+      data: payments
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      message: error.message
+    });
+  }
+};
